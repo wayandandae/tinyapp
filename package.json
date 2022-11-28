@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/wayandandae/tinyapp/issues"
   },
-  "homepage": "https://github.com/wayandandae/tinyapp#readme"
+  "homepage": "https://github.com/wayandandae/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
