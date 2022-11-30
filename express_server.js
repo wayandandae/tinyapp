@@ -9,17 +9,45 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
+const generateRandomString = () => {
+  // create an array variable to hold all alphanumeric characters
+  const charList = [];
+  // uppercase alphabet charcode starts from 65
+  const uppStart = 65;
+  // lowercase alphabet charcode starts from 97
+  const lowStart = 97;
+
+  // push numbers from 0 to 9
+  for (let i = 0; i <= 9; i++) {
+    charList.push(i);
+  }
+  // push uppercase and lowercase alphabets
+  for (let j = 0; j < 26; j++) {
+    charList.push(String.fromCharCode(uppStart + j));
+    charList.push(String.fromCharCode(lowStart + j));
+  }
+
+  // return character of a random index from 0 to charList length (not inclusive)
+  return charList[Math.floor(Math.random() * charList.length)];
+};
+
+app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
-  res.render("urls_index", templateVars);
+app.get("/", (req, res) => {
+  res.send("Hello!");
+});
+
+app.get("/hello", (req, res) => {
+  const templateVars = { greeting: "Hello World!" };
+  res.render("hello_world", templateVars);
+});
+
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
 });
 
 app.get("/urls/:id", (req, res) => {
@@ -31,7 +59,12 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting: "Hello World!" };
-  res.render("hello_world", templateVars);
+app.get("/urls", (req, res) => {
+  const templateVars = { urls: urlDatabase };
+  res.render("urls_index", templateVars);
+});
+
+app.post("/urls", (req, res) => {
+  console.log(req.body);
+  res.send("Ok");
 });
