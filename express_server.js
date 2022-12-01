@@ -16,6 +16,8 @@ const generateRandomString = () => {
   const uppStart = 65;
   // lowercase alphabet charcode starts from 97
   const lowStart = 97;
+  // create a variable to hold random alphanumeric value
+  let result = "";
 
   // push numbers from 0 to 9
   for (let i = 0; i <= 9; i++) {
@@ -26,9 +28,12 @@ const generateRandomString = () => {
     charList.push(String.fromCharCode(uppStart + j));
     charList.push(String.fromCharCode(lowStart + j));
   }
+  // add up to 6 random characters to the result string
+  for (let k = 0; k < 6; k++) {
+    result += charList[Math.floor(Math.random() * charList.length)];
+  }
 
-  // return character of a random index from 0 to charList length (not inclusive)
-  return charList[Math.floor(Math.random() * charList.length)];
+  return result;
 };
 
 app.use(express.urlencoded({ extended: true }));
@@ -65,6 +70,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);
-  res.send("Ok");
+  const randomID = generateRandomString();
+  urlDatabase[randomID] = req.body.longURL;
+  res.redirect(`/urls/${randomID}`);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
