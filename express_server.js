@@ -5,8 +5,14 @@ const PORT = 8080; // default port 8080
 
 // tinyURL-longURL database object
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 // object to hold users id, email, and password
@@ -66,6 +72,15 @@ const getUserByEmail = mail => {
   return null;
 };
 
+const urlsForUser = id => {
+  const result = {};
+  for (const [key, value] of Object.entries(urlDatabase)) {
+    if (value.userID === id) {
+      result[key] = { longURL: value.longURL };
+    }
+  }
+  return result;
+};
 
 app.set("view engine", "ejs");
 app.use(cookieParser());
@@ -87,12 +102,19 @@ app.get("/hello", (req, res) => {
 app.get("/urls/new", (req, res) => {
   const userID = req.cookies["user_id"];
   const templateVars = { user: users[userID] };
-  res.render("urls_new", templateVars);
+  userID ? res.render("urls_new", templateVars) : res.redirect("/login");
 });
 
 app.get("/urls/:id", (req, res) => {
   const userID = req.cookies["user_id"];
-  const templateVars = { user: users[userID], id: req.params.id, longURL: urlDatabase[req.params.id] };
+  const requestID = req.params.id;
+  if (!userID) {
+    res.send('You must log in to view this website.');
+  }
+  if (userID !== urlDatabase[requestID].userID) {
+    res.send('You do not have permission to view this website.');
+  }
+  const templateVars = { user: users[userID], id: requestID, longURL: urlDatabase[requestID].longURL };
   res.render("urls_show", templateVars);
 });
 
@@ -102,41 +124,67 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userID = req.cookies["user_id"];
-  const templateVars = { user: users[userID], urls: urlDatabase };
-  res.render("urls_index", templateVars);
+  const templateVars = { user: users[userID], urls: urlsForUser(userID) };
+  userID ? res.render("urls_index", templateVars) : res.send("You must log in to view the websites.");
 });
 
 app.get("/u/:id", (req, res) => {
-  const longURL = urlDatabase[req.params.id];
+  if (Object.keys(urlDatabase).indexOf(req.params.id) < 0) {
+    res.send(`TinyURL ${req.params.id} does not exist in our database.`);
+  }
+  const longURL = urlDatabase[req.params.id].longURL;
   res.redirect(longURL);
 });
 
 app.get("/register", (req, res) => {
   const userID = req.cookies["user_id"];
   const templateVars = { user: users[userID] };
-  res.render("user_registration", templateVars);
+  userID ? res.redirect("/urls") : res.render("user_registration", templateVars);
 });
 
 app.get("/login", (req, res) => {
   const userID = req.cookies["user_id"];
   const templateVars = { user: users[userID] };
-  res.render("user_login", templateVars);
+  userID ? res.redirect("/urls") : res.render("user_login", templateVars);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+  const userID = req.cookies["user_id"];
+  const requestID = req.params.id;
+  if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
+    res.send(`TinyURL ${requestID} does not exist in our database.`);
+  }
+  if (!userID) {
+    res.send('You must log in to delete this link.');
+  }
+  if (userID !== urlDatabase[requestID].userID) {
+    res.send('You must own the link to delete it.');
+  }
+  delete urlDatabase[requestID];
   res.redirect("/urls");
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  const userID = req.cookies["user_id"];
+  const requestID = req.params.id;
+  if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
+    res.send(`TinyURL ${requestID} does not exist in our database.`);
+  }
+  if (!userID) {
+    res.send('You must log in to edit this link.');
+  }
+  if (userID !== urlDatabase[requestID].userID) {
+    res.send('You must own the link to edit it.');
+  }
+  urlDatabase[requestID].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 
 app.post("/urls", (req, res) => {
+  const userID = req.cookies["user_id"];
   const randomID = generateRandomString();
-  urlDatabase[randomID] = req.body.longURL;
-  res.redirect(`/urls/${randomID}`);
+  urlDatabase[randomID].longURL = req.body.longURL;
+  userID ? res.redirect(`/urls/${randomID}`) : res.send('You must log in to register a new website.');
 });
 
 app.post("/login", (req, res) => {
@@ -157,7 +205,7 @@ app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  if (!req.body.email || !req.body.password || getUserByEmail(req.body.email)) {
+  if (!email || !password || getUserByEmail(email)) {
     res.status(400).send('Registration failed.');
   }
   users[randomID] = { id: randomID, email, password };
