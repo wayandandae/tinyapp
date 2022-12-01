@@ -1,5 +1,5 @@
 const express = require("express");
-const cookieParser = require("cookie-parser");
+const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
@@ -84,7 +84,10 @@ const urlsForUser = id => {
 };
 
 app.set("view engine", "ejs");
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['key1', 'key2']
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, () => {
@@ -101,13 +104,13 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] };
   userID ? res.render("urls_new", templateVars) : res.redirect("/login");
 });
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const requestID = req.params.id;
   if (!userID) {
     res.send('You must log in to view this website.');
@@ -124,7 +127,7 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID], urls: urlsForUser(userID) };
   userID ? res.render("urls_index", templateVars) : res.send("You must log in to view the websites.");
 });
@@ -138,19 +141,19 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] };
   userID ? res.redirect("/urls") : res.render("user_registration", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const templateVars = { user: users[userID] };
   userID ? res.redirect("/urls") : res.render("user_login", templateVars);
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const requestID = req.params.id;
   if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
     res.send(`TinyURL ${requestID} does not exist in our database.`);
@@ -166,7 +169,7 @@ app.post("/urls/:id/delete", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const requestID = req.params.id;
   if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
     res.send(`TinyURL ${requestID} does not exist in our database.`);
@@ -182,7 +185,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["user_id"];
+  const userID = req.session.user_id;
   const randomID = generateRandomString();
   urlDatabase[randomID].longURL = req.body.longURL;
   userID ? res.redirect(`/urls/${randomID}`) : res.send('You must log in to register a new website.');
@@ -190,27 +193,29 @@ app.post("/urls", (req, res) => {
 
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email);
-  if (bcrypt.compareSync(req.body.password, user.password)) {
-    res.cookie("user_id", user.id);
+  if (user) {
+    if (bcrypt.compareSync(req.body.password, user.password)) {
+    req.session.user_id = "user_id";
     res.redirect("/urls");
+    }
   }
   res.status(403).send('Account credentials do not match our records.');
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const email = req.body.email;
-  const password = bcrypt.hashSync(req.body.password, 10);
+  const password = req.body.password;
   if (!email || !password || getUserByEmail(email)) {
     res.status(400).send('Registration failed.');
   }
-  users[randomID] = { id: randomID, email, password };
-  res.cookie("user_id", randomID);
+  users[randomID] = { id: randomID, email, password: bcrypt.hashSync(password, 10) };
+  req.session.user_id = randomID;
   console.log(users);
   res.redirect("/urls");
 });
