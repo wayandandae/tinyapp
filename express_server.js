@@ -1,5 +1,6 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("bcryptjs");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -189,11 +190,11 @@ app.post("/urls", (req, res) => {
 
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email);
-  if (user && user.password === req.body.password) {
+  if (bcrypt.compareSync(req.body.password, user.password)) {
     res.cookie("user_id", user.id);
     res.redirect("/urls");
   }
-  res.status(403).send('Account credentials does not match our records.');
+  res.status(403).send('Account credentials do not match our records.');
 });
 
 app.post("/logout", (req, res) => {
@@ -204,7 +205,7 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const email = req.body.email;
-  const password = req.body.password;
+  const password = bcrypt.hashSync(req.body.password, 10);
   if (!email || !password || getUserByEmail(email)) {
     res.status(400).send('Registration failed.');
   }
