@@ -24,10 +24,8 @@
         <button type="submit" class="btn btn-outline-dark">Logout</button>
       </form>
     <% } else {%>
-      <form method="POST" action="/login">
-        <input type="text" class="rounded" name="email" placeholder="Username">
-        <button type="submit" class="btn btn-outline-dark">Login</button>
-      </form>
+      <a class="btn btn-warning" href="/register" style="margin-right: 10px">Register</a>
+      <a class="btn btn-outline-dark" href="/login">Login</a>
     <% }%>
   </nav>
 </header>
