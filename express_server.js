@@ -47,15 +47,18 @@ const generateRandomString = () => {
   for (let k = 0; k < 6; k++) {
     result += charList[Math.floor(Math.random() * charList.length)];
   }
-
   return result;
 };
 
 // function to search user by email address
 const getUserByEmail = mail => {
+  // iterate through all user objects in users constant
   for (const user of Object.values(users)) {
+    // iterate through all key, value pairs in each user
     for (const [key, value] of Object.entries(user)) {
+      // if key is email and its value is the same as the argument
       if (key === "email" && value === mail) {
+        // return the user object
         return user;
       }
     }
@@ -137,14 +140,17 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("email", req.body.email);
-  res.redirect("/urls");
+  const user = getUserByEmail(req.body.email);
+  if (user && user.password === req.body.password) {
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  }
+  res.status(403).send('Account credentials does not match our records.');
 });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.clearCookie("email");
-  res.redirect("/urls");
+  res.redirect("/login");
 });
 
 app.post("/register", (req, res) => {
