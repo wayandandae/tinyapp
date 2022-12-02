@@ -24,4 +24,4 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Known Issues
 
-- If the user tries to log in again after logging out, _header template is not updated.
+- ~~If the user tries to log in again after logging out, _header template is not updated.~~
