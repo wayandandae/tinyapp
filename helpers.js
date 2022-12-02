@@ -22,7 +22,7 @@ const generateRandomString = () => {
   for (let k = 0; k < 6; k++) {
     result += charList[Math.floor(Math.random() * charList.length)];
   }
-  return result;
+  return String(result);
 };
 
 // function to search user by email address from database

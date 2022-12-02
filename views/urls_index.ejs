@@ -35,12 +35,10 @@
                 <td><%= key %></td>
                 <td><%= value.longURL %></td>
                 <td>
-                  <form action="/urls/<%= key %>">
-                    <button type="submit" class="btn btn-outline-primary">Edit</button>
-                  </form>
+                  <a href="/urls/<%= key %>" class="btn btn-outline-primary">Edit</button>
                 </td>
                 <td>
-                  <form method="POST" action="/urls/<%= key %>/delete">
+                  <form method="POST" action="/urls/<%= key %>?_method=DELETE">
                     <button type="submit" class="btn btn-outline-danger">Delete</button>
                   </form>
                 </td>
@@ -48,10 +46,6 @@
             <% } %>
         </tbody>
       </table>
-      
-      <div>
-        <a href="#">Click here to shorten your URL</a>
-      </div>
     </main>
     <!-- Bootstrap JS -->
     <script

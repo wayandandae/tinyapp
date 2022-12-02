@@ -1,4 +1,5 @@
 const express = require("express");
+const methodOverride = require("method-override");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const { generateRandomString, getUserByEmail, urlsForUser } = require("./helpers");
@@ -22,22 +23,22 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: bcrypt.hashSync("purple-monkey-dinosaur", 10),
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: bcrypt.hashSync("dishwasher-funk", 10),
   },
 };
 
 app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
-app.use(express.urlencoded({ extended: true }));
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -48,7 +49,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/hello", (req, res) => {
-  const templateVars = { greeting: "Hello World!" };
+  const templateVars = { greeting: "Hello World! This is my first Express app!" };
   res.render("hello_world", templateVars);
 });
 
@@ -77,7 +78,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
-  let templateVars = { user: users[userID], urls: urlsForUser(userID, urlDatabase) };
+  const templateVars = { user: users[userID], urls: urlsForUser(userID, urlDatabase) };
   userID ? res.render("urls_index", templateVars) : res.send("You must log in to view the websites.");
 });
 
@@ -101,7 +102,7 @@ app.get("/login", (req, res) => {
   userID ? res.redirect("/urls") : res.render("user_login", templateVars);
 });
 
-app.post("/urls/:id/delete", (req, res) => {
+app.delete("/urls/:id/", (req, res) => {
   const userID = req.session.user_id;
   const requestID = req.params.id;
   if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
@@ -117,7 +118,7 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:id", (req, res) => {
+app.put("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
   const requestID = req.params.id;
   if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
@@ -136,7 +137,10 @@ app.post("/urls/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   const userID = req.session.user_id;
   const randomID = generateRandomString();
-  urlDatabase[randomID].longURL = req.body.longURL;
+  if (!req.body.longURL) {
+    res.send('You must enter a link to shorten.');
+  }
+  urlDatabase[randomID] = { longURL: req.body.longURL, userID };
   userID ? res.redirect(`/urls/${randomID}`) : res.send('You must log in to register a new website.');
 });
 
