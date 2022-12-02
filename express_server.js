@@ -1,6 +1,7 @@
 const express = require("express");
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { generateRandomString, getUserByEmail, urlsForUser } = require("./helpers");
 const app = express();
 const PORT = 8080; // default port 8080
 
@@ -30,65 +31,13 @@ const users = {
   },
 };
 
-// function to create a 6-character alphanumeric string
-const generateRandomString = () => {
-  // create an array variable to hold all alphanumeric characters
-  const charList = [];
-  // uppercase alphabet charcode starts from 65
-  const uppStart = 65;
-  // lowercase alphabet charcode starts from 97
-  const lowStart = 97;
-  // create a variable to hold random alphanumeric value
-  let result = "";
-
-  // push numbers from 0 to 9
-  for (let i = 0; i <= 9; i++) {
-    charList.push(i);
-  }
-  // push uppercase and lowercase alphabets
-  for (let j = 0; j < 26; j++) {
-    charList.push(String.fromCharCode(uppStart + j));
-    charList.push(String.fromCharCode(lowStart + j));
-  }
-  // add up to 6 random characters to the result string
-  for (let k = 0; k < 6; k++) {
-    result += charList[Math.floor(Math.random() * charList.length)];
-  }
-  return result;
-};
-
-// function to search user by email address
-const getUserByEmail = mail => {
-  // iterate through all user objects in users constant
-  for (const user of Object.values(users)) {
-    // iterate through all key, value pairs in each user
-    for (const [key, value] of Object.entries(user)) {
-      // if key is email and its value is the same as the argument
-      if (key === "email" && value === mail) {
-        // return the user object
-        return user;
-      }
-    }
-  }
-  return null;
-};
-
-const urlsForUser = id => {
-  const result = {};
-  for (const [key, value] of Object.entries(urlDatabase)) {
-    if (value.userID === id) {
-      result[key] = { longURL: value.longURL };
-    }
-  }
-  return result;
-};
-
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
 app.use(express.urlencoded({ extended: true }));
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -128,7 +77,7 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userID = req.session.user_id;
-  const templateVars = { user: users[userID], urls: urlsForUser(userID) };
+  let templateVars = { user: users[userID], urls: urlsForUser(userID, urlDatabase) };
   userID ? res.render("urls_index", templateVars) : res.send("You must log in to view the websites.");
 });
 
@@ -192,11 +141,11 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const user = getUserByEmail(req.body.email);
-  if (user) {
-    if (bcrypt.compareSync(req.body.password, user.password)) {
-    req.session.user_id = "user_id";
-    res.redirect("/urls");
+  const userID = getUserByEmail(req.body.email, users);
+  if (userID) {
+    if (bcrypt.compareSync(req.body.password, users[userID].password)) {
+      req.session.user_id = "user_id";
+      res.redirect("/urls");
     }
   }
   res.status(403).send('Account credentials do not match our records.');
@@ -211,7 +160,7 @@ app.post("/register", (req, res) => {
   const randomID = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  if (!email || !password || getUserByEmail(email)) {
+  if (!email || !password || getUserByEmail(email, users)) {
     res.status(400).send('Registration failed.');
   }
   users[randomID] = { id: randomID, email, password: bcrypt.hashSync(password, 10) };
