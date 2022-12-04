@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+    />
+    <title>TinyApp</title>
+  </head>
+  <body>
+    <%- include('partials/_header') %>
+
+    <main style="margin: 1em;">
+      <div style="margin-top: 1em; margin-left: 0.5em">
+      <h2>Hello,
+      <% if(user) {%>
+        <%= user.email %>!
+      <% } else {%>
+        stranger!
+      <% } %></h2>
+      </div>
+      <div style="margin-top: 2em; margin-left: 0.5em">
+      <h5>Welcome to TinyApp application by <a href="https://github.com/wayandandae">Jack Kang</a> 
+        of <a href="https://www.lighthouselabs.ca/">Lighthouse Labs</a>!</h5>
+      <h5>This project was created with <a href="https://expressjs.com/en/4x/api.html">Express v4.18</a> for Node.js. 
+        Details of the application can be found at my <a href="https://github.com/wayandandae/tinyapp">GitHub repository</a>.</h5>
+      <h5>If you have any questions, feel free to contact me via 
+        <a href="mailto:jkang0724@hotmail.com?&subject=Regarding%20Your%20TinyApp%20for%20Lighthouse%20Labs">Email</a> or 
+        <a href="discordapp.com/users/1029156006472732773">Discord</a>.</h5>
+      </div>
+
+      <div style="margin-top:3em; margin-left:3em">
+        <a href="https://discord.com/users/1029156006472732773">
+          <img src="../docs/discord.png" alt="Jack's Discord Profile" style="width:256px; height:256px;">
+        </a>
+        <a href="https://github.com/wayandandae">
+          <img src="../docs/github.png" alt="Jack's GitHub Profile" style="width:256px; height:256px; margin-left:3em">
+        </a>
+        <a href="https://www.lighthouselabs.ca/">
+          <img src="../docs/lighthouse_labs.png" alt="Lighthouse Labs Website" style="width:256px; height:256px; margin-left:3em">
+        </a>
+      </div>
+    </main>
+    <!-- Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+      integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+      integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>
