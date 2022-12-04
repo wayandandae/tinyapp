@@ -16,6 +16,8 @@ app.set("view engine", "ejs");
 // middlewares (*listing them at the end returns errors...)
 // middleware to parse url-encoded data
 app.use(express.urlencoded({ extended: true }));
+// middleware to use static files from all folders
+app.use(express.static('.'));
 // method-override middleware for PUT/DELETE methods
 app.use(methodOverride('_method'));
 // cookie-session middleware for cookie encryption
@@ -23,23 +25,18 @@ app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2']
 }));
-// middleware to use static files from all folders
-app.use(express.static('.'));
 
-app.listen(PORT, () => {
-  console.log(`Jack's TinyApp listening on port ${PORT}!`);
-});
 
 app.get("/", (req, res) => {
   // ID retrieved from cookie object's user_id value
   const cookieID = req.session.user_id;
   // use user_id from the cookie as template variable
   const templateVars = { user: users[cookieID] };
-  // render the main page with the user object in the database
+  // render the main page with the user object from the database
   res.render("main", templateVars);
 });
 
-// render new TinyUrl creation page
+// page to create a new TinyUrl
 app.get("/urls/new", (req, res) => {
   const cookieID = req.session.user_id;
   const templateVars = { user: users[cookieID] };
@@ -56,7 +53,7 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const cookieID = req.session.user_id;
   const requestID = req.params.id;
-  // if URL ID is not found from the database,
+  // if URL ID is not found in the database,
   if (Object.keys(urlDatabase).indexOf(requestID) < 0) {
     res.send(`TinyURL ${requestID} does not exist in our database.`);
   } else if (!cookieID) {
@@ -70,18 +67,18 @@ app.get("/urls/:id", (req, res) => {
   }
 });
 
-// page to show json object of user URLs
+// page to show JSON object of user URLs
 app.get("/urls.json", (req, res) => {
   const cookieID = req.session.user_id;
-  // user can only see owned URLs
+  // users can only see URLs they own
   const urlsToShow = urlsForUser(cookieID, urlDatabase);
   res.json(urlsToShow);
 });
 
-// show all owned URLs with edit and delete buttons
+// page to show all owned URLs with edit and delete buttons
 app.get("/urls", (req, res) => {
   const cookieID = req.session.user_id;
-  // only owned URLs filtered by the urlsForUser helper will be passed
+  // only owned URLs returned by urlsForUser helper will be passed
   const templateVars = { user: users[cookieID], urls: urlsForUser(cookieID, urlDatabase) };
   if (!cookieID) {
     res.send("You must log in to view the websites.");
@@ -90,7 +87,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// redirect to the website with the corresponding TinyURL
+// path to redirect to the website with a corresponding TinyURL
 app.get("/u/:id", (req, res) => {
   const requestID = req.params.id;
   const header = "http";
@@ -98,7 +95,7 @@ app.get("/u/:id", (req, res) => {
     res.send(`TinyURL ${requestID} does not exist in our database.`);
   } else {
     let longURL = urlDatabase[requestID].longURL;
-    // if longURL does not start with http, add proper header
+    // if longURL does not start with http, add proper header for routing
     if (longURL.slice(0, 4) !== header) {
       longURL = header + "://" + longURL;
     }
@@ -106,6 +103,7 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+// user registration page
 app.get("/register", (req, res) => {
   const cookieID = req.session.user_id;
   const templateVars = { user: users[cookieID] };
@@ -119,11 +117,11 @@ app.get("/register", (req, res) => {
   }
 });
 
+// user login page
 app.get("/login", (req, res) => {
   const cookieID = req.session.user_id;
   const templateVars = { user: users[cookieID] };
   if (!cookieID) {
-    // render user_login template if user has to log in
     res.render("user_login", templateVars);
   } else {
     res.redirect("/urls");
@@ -148,7 +146,7 @@ app.put("/urls/:id", (req, res) => {
   }
 });
 
-// delete created TinyURL from the database
+// delete a created TinyURL from the database
 app.delete("/urls/:id/", (req, res) => {
   const cookieID = req.session.user_id;
   const requestID = req.params.id;
@@ -165,9 +163,10 @@ app.delete("/urls/:id/", (req, res) => {
   }
 });
 
-// create a new TinyURL link using the user input
+// create a new TinyURL link with the user string input
 app.post("/urls", (req, res) => {
   const cookieID = req.session.user_id;
+  // create a random alphanumeric string ID
   const randomID = generateRandomString();
   // if user did not provide a URL,
   if (!req.body.longURL) {
@@ -193,11 +192,10 @@ app.post("/register", (req, res) => {
   } else if (getUserByEmail(email, users)) {
     res.status(400).send(`There is an existing account registered with ${email}.`);
   } else {
-    // create a random alphanumeric string ID
     const randomID = generateRandomString();
-    // add the new user object to users database
+    // add the new user object with the password encrypted to users database
     users[randomID] = { id: randomID, email, password: bcrypt.hashSync(password, 10) };
-    // set cookie as the created random ID
+    // set cookie's user_id as the created random ID
     req.session.user_id = randomID;
     console.log(users);
     res.redirect("/urls");
@@ -220,4 +218,9 @@ app.post("/logout", (req, res) => {
   // clear current cookie session
   req.session = null;
   res.redirect("/login");
+});
+
+
+app.listen(PORT, () => {
+  console.log(`Jack's TinyApp listening on port ${PORT}!`);
 });
